@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.BoardMapper">
+	<select id="getList" resultType="com.hmall.domain.BoardVO">
+		<![CDATA[
+		select * from board_tbl where bno > 0 and rownum <= 10
+		]]>
+	</select>
+	
+	<insert id="insertSelectKey">
+	 	<selectKey keyProperty="bno" resultType="long" order="BEFORE">
+	 		select seq_board.nextval from dual
+	 	</selectKey>
+	 	
+	 	insert into board_tbl(bno, b_title, b_content, mb_id)
+		values(#{bno}, #{b_title} , #{b_content}, #{mb_id})
+	 </insert> 
+	 
+	 <select id="read" resultType="com.hmall.domain.BoardVO">
+		<![CDATA[
+		select bno, b_title, b_content, mb_id, b_regdate, b_update_date  from board_tbl where bno = #{bno}
+		]]>
+	</select>
+	 
+	<update id="update">
+		update board_tbl set b_title=#{b_title}, b_content=#{b_content},mb_id=#{mb_id}, b_update_date = sysdate
+		where bno = #{bno}
+	</update>
+	
+	<delete id="delete">
+		delete from board_tbl where bno = #{bno}
+	</delete> 
+	
+	<sql id="criteria">
+		<trim prefix="(" suffix=")  and" prefixOverrides="OR" > 
+	       <foreach item="type" collection="typeArr">
+	         <trim prefix="OR">	
+	       	<choose>
+	       		<when test="type == 'T'.toString()">
+	       			b_title like '%' || #{keyword} || '%'
+	       		</when>
+	       		<when test="type == 'C'.toString()">
+	       			b_content like '%' || #{keyword} || '%'
+	       		</when>
+	       		<when test="type == 'W'.toString()">
+	       			mb_id like '%' || #{keyword} || '%'
+	       		</when>
+	       	</choose>
+	         </trim>
+	       </foreach> 
+	    </trim>
+	</sql>
+	 
+	<select id="getListWithPaging" resultType="com.hmall.domain.BoardVO">
+		<![CDATA[
+		select bno, b_title, mb_id, b_content, b_regdate, b_update_date
+		from (select /*+ index_desc(board_tbl SYS_C005148) */ rownum rn, bno, b_title, mb_id, b_content, b_regdate, b_update_date
+        from board_tbl where  bno > 0 and rownum > 0 and rownum <= #{pageNum} * #{amount})
+		where rn  > (#{pageNum}-1) * #{amount}
+		]]>
+	</select> 
+	
+	<select id="getListWithSearchPaging" resultType="com.hmall.domain.BoardVO">
+		<![CDATA[
+			select bno, b_title, mb_id, b_content, b_regdate, b_update_date, replyCnt
+			from 
+			(
+				select /*+ index_desc(board_tbl SYS_C005148) */ rownum rn, bno, b_title, mb_id, b_content, b_regdate, b_update_date, replyCnt
+		        from board_tbl 
+		        where  
+	     ]]>
+	        
+	       <include refid="criteria"></include>
+	          
+	        
+	     <![CDATA[    
+	        rownum > 0 and rownum <= #{pageNum} * #{amount}
+	        )
+			where rn  > (#{pageNum}-1) * #{amount}
+		 ]]>
+	</select>
+	
+	<select id="getTotalCount" resultType="int">
+		
+		select count(*) from board_tbl where  
+		
+		<include refid="criteria"></include>
+		<![CDATA[
+		bno > 0
+		]]>
+	</select>
+	
+	<update id="updateReplyCnt">
+		update board_tbl set replyCnt = replyCnt + #{amount} where bno = #{bno}
+	</update>
+	
+</mapper>

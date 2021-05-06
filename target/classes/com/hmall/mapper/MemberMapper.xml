@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.MemberMapper">
+
+	<!-- 아이디 중복 체크 -->
+	<select id="checkIdDuplicate" resultType="int">
+		select count(*)
+		from member_tbl
+		where mb_id = #{mb_id}
+	</select>
+	
+	<select id="login_ok" resultType="com.hmall.domain.MemberVO">
+		select * from member_tbl where mb_id = #{mb_id}
+	</select>
+	
+	<!-- 회원 가입 -->
+	<insert id="memberJoin">
+		insert into member_tbl(mb_id, mb_pw, mb_name, mb_sex, 
+		mb_post, mb_addr, mb_addr2, mb_cp, mb_email, mb_accept_e)
+		values(#{mb_id}, #{mb_pw}, #{mb_name}, #{mb_sex},
+		#{mb_post}, #{mb_addr}, #{mb_addr2}, #{mb_cp}, #{mb_email}, #{mb_accept_e})
+	</insert>
+
+	<!-- 회원 정보 가져오기 -->
+	<select id="member_info" resultType="com.hmall.domain.MemberVO">
+		select * from member_tbl where mb_id = #{mb_id}
+	</select>
+	
+	<!-- 회원수정 -->
+	<update id="modifyPost">
+		update member_tbl set mb_pw = #{mb_pw},
+							  mb_email = #{mb_email},
+							  mb_sex = #{mb_sex}, 
+							  mb_post = #{mb_post}, 
+							  mb_addr = #{mb_addr}, 
+							  mb_addr2 = #{mb_addr2}, 
+							  mb_cp = #{mb_cp}, 
+							  mb_accept_e = #{mb_accept_e},                			    
+                  			  mb_update_date = sysdate
+		where mb_id = #{mb_id}
+	</update>
+	
+	<!-- 회원 삭제 -->
+	<delete id="delete_member">
+		delete from member_tbl where mb_id = #{mb_id}
+	</delete>
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="find_password" resultType="com.hmall.domain.MemberVO">
+		select * from member_tbl where mb_id = #{mb_id} and mb_name = #{mb_name}
+	</select>
+	
+	<!-- 아이디 찾기 -->
+	<select id="find_id" resultType="string">
+		select mb_id from member_tbl where mb_name = #{mb_name} and mb_email = #{mb_email}
+	</select>
+	
+	<update id="updatePw">
+		update member_tbl set mb_pw = #{mb_pw} where mb_id = #{mb_id}
+	</update>
+	
+	
+	
+	
+	
+</mapper>

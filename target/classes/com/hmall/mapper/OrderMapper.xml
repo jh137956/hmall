@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.OrderMapper">
+
+	<insert id="order_add">
+		<selectKey keyProperty="od_code" resultType="long" order="BEFORE">
+			select seq_od_code.nextval from dual
+		</selectKey>
+		insert into order_tbl (od_code, mb_id, od_name, od_post, od_addr, od_addr2, od_phone, od_total_price)
+		values (#{od_code}, #{mb_id}, #{od_name}, #{od_post}, #{od_addr}, #{od_addr2}, #{od_phone}, #{od_total_price})
+	</insert>
+	
+	<insert id="orderDetail_add">
+		insert into order_detail_tbl (od_code, pdt_num, od_amount, od_price)
+		select #{od_code}, p.pdt_num, c.cart_count_buy, p.pdt_price-p.pdt_discount 
+		from cart_tbl c inner join product_tbl p
+		on c.pdt_num = p.pdt_num
+		where mb_id = #{mb_id}
+	</insert>
+	
+	<insert id="orderDirect_add">
+		insert into order_detail_tbl (od_code, pdt_num, od_amount, od_price)
+		values(#{od_code}, #{pdt_num}, #{od_amount}, #{od_price})
+	</insert>
+	
+	<select id="my_order_List" resultType="com.hmall.domain.OrderVO">
+		select od_code, mb_id, od_name, od_post, od_addr, od_addr2, od_phone, od_total_price, od_date
+		from order_tbl 
+		where mb_id = #{mb_id}
+	</select>
+	
+	<sql id="criteria">
+		<trim prefix="(" suffix=") and" prefixOverrides="OR">
+			<foreach item="type" collection="typeArr">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'N'.toString()">
+							od_code like '%' || #{keyword} || '%'
+						</when>
+						<when test="type == 'D'.toString()">
+							mb_id like '%' || #{keyword} || '%'
+						</when>
+						<when test="type == 'C'.toString()">
+							od_date like '%' || #{keyword} || '%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="orderInfo_list" resultType="com.hmall.domain.OrderVO">
+		<![CDATA[
+		select od_code, mb_id, od_name, od_post, od_addr, od_addr2, od_phone, od_total_price, od_date
+    	from
+        	(select /*+ index_desc(order_tbl SYS_C005140) */ rownum rn, od_code, mb_id, od_name, od_post, od_addr, od_addr2, od_phone, od_total_price, od_date
+        	from order_tbl where od_code > 0 and
+        ]]>	
+
+     	<include refid="criteria"></include>
+
+        <![CDATA[   
+          	rownum > 0 and rownum <= #{pageNum} * #{amount})
+		where rn  > (#{pageNum}-1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getTotalCountOrder" resultType="int">
+		
+		select count(*) from order_tbl where 
+
+     	<include refid="criteria"></include>
+     
+		<![CDATA[
+		od_code > 0
+		]]>
+	</select>
+	
+	<select id="order_Detail_List" resultType="com.hmall.domain.OrderDetailListVO">
+		select od.od_code, od.pdt_num, p.pdt_img, p.pdt_name, od.od_amount, od.od_price, p.pdt_discount 
+		from order_detail_tbl od inner join product_tbl p
+		on od.pdt_num = p.pdt_num
+		where od.od_code = #{od_code}
+	</select>
+	
+	<delete id="order_check_delete">
+		delete from order_tbl where od_code in
+		<foreach collection="list" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</delete>
+	
+	<select id="order_sale" resultType="com.hmall.dto.OrderSaleDTO">
+		<![CDATA[
+		select to_char(b.dt, 'YYYY-MM-DD') as days_order, to_char(b.dt, 'DY') as day, nvl(sum(a.days_total_price), 0) as days_total_price,
+			nvl(sum(a.day_total_count), 0) as day_total_count
+		from (
+	        select to_char(od_date, 'YYYY-MM-DD') days_order, sum(od_total_price) days_total_price, count(od_code) day_total_count
+			from order_tbl where od_date between to_date(#{startDate},'YYYY-MM-DD') and to_date(#{endDate}, 'YYYY-MM-DD')
+			group by to_char(od_date, 'YYYY-MM-DD')	
+     		) a
+     	,
+	     	(
+	        select to_date(#{startDate},'YYYY-MM-DD') + level  - 1 as dt
+	        from dual
+	        connect by level <= (to_date(#{endDate}, 'YYYY-MM-DD') - to_date(#{startDate},'YYYY-MM-DD')+ 1)     
+		    ) b
+		where b.dt = a.days_order(+)
+		group by b.dt
+		order by b.dt
+		 
+		  ]]> 
+	</select>
+	
+	
+	
+</mapper>

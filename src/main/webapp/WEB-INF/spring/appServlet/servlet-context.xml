@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+	
+	<!-- 추가 -->
+	<resources mapping="/js/**" location="/resources/js/" />
+	<resources mapping="/bower_components/**" location="/resources/bower_components/" />
+	<resources mapping="/ckeditor/**" location="/resources/bower_components/ckeditor/" />
+	<resources mapping="/dist/**" location="/resources/dist/" />
+	<resources mapping="/plugins/**" location="/resources/plugins/" />
+	
+	<resources mapping="/upload/**" location="/resources/upload/" />
+	
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<!-- 파일 업로드 Path 
+	<beans:bean id="uploadPath" class="java.lang.String">
+		<beans:constructor-arg value="C:\\dev\\upload\\"></beans:constructor-arg>
+	</beans:bean>
+	-->
+	<beans:bean id="uploadPath" class="java.lang.String">
+		<beans:constructor-arg value="/usr/local/tomcat/upload"></beans:constructor-arg>
+	</beans:bean>
+	
+	
+	<!-- 업로드되는 파일을 처리하기위한 bean(객체) -->
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.support.StandardServletMultipartResolver">
+	</beans:bean>
+	
+	
+	<!-- 인터셉터 -->
+	<!-- 인터셉터 클래스 생성 : 3개의 추상메서드를 재정한다 -->
+	<!-- 인터셉터클래스를 bean으로 등록 -->
+	<!-- 인터셉터 bean을 적용할 컨트롤러의 URL mappong주소를 servlet-context.xml -->
+	<!-- 
+	<beans:bean id="sampleInterceptor" class="com.hmall.interceptor.SampleInterceptor"></beans:bean>
+	 -->
+	
+	<beans:bean id="adminInterceptor" class="com.hmall.interceptor.AdminInterceptor"></beans:bean>  
+	 
+	<beans:bean id="loginInterceptor" class="com.hmall.interceptor.LoginInterceptor"></beans:bean>
+	
+	<beans:bean id="authInterceptor" class="com.hmall.interceptor.AuthInterceptor"></beans:bean>
+	
+	
+	<interceptors>
+	<!--
+		<interceptor>
+			<mapping path="/sample/methodA"/>
+			<beans:ref bean="sampleInterceptor"/>
+		</interceptor>
+	-->
+	
+		<interceptor>
+			<mapping path="/admin/**"/>
+			<exclude-mapping path="/admin/"/>
+			<exclude-mapping path="/admin/adminPost"/>
+			<exclude-mapping path="/admin/admin"/>
+			<beans:ref bean="adminInterceptor"/>
+		</interceptor>
+
+		<interceptor>
+			<mapping path="/member/loginPost"/>
+			<beans:ref bean="loginInterceptor"/>
+		</interceptor>
+		
+		<interceptor>
+			<mapping path="/order/*"/>
+			<beans:ref bean="authInterceptor"/>
+		</interceptor>
+		
+	</interceptors>
+
+	<context:component-scan base-package="com.hmall.controller" />
+	
+	
+	 
+</beans:beans>

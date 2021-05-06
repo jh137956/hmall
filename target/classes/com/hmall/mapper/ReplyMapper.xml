@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.ReplyMapper">
+	
+	<insert id="insert">
+		insert into reply_tbl(rno, bno, reply, mb_id)
+		values(seq_reply.nextval, #{bno}, #{reply}, #{mb_id})
+	</insert>
+	
+	<select id="read" resultType="com.hmall.domain.ReplyVO">
+		select * from reply_tbl where rno = #{rno}
+	</select>
+	
+	<select id="getListWithPaging" resultType="com.hmall.domain.ReplyVO">
+		 <![CDATA[ 
+		select rno, bno, reply, mb_id, replydate, updatedate
+		from (select /*+ index_desc(reply_tbl SYS_C005155) */ rownum rn,rno, bno, reply, mb_id, replydate, updatedate  
+        from reply_tbl where  bno = #{bno} and rno > 0 and   rownum > 0 and rownum <= #{cri.pageNum} * #{cri.amount})
+		where rn  > (#{cri.pageNum} - 1) * #{cri.amount}
+		]]>
+	</select>
+	
+	<select id="getCountByBno" resultType="int">
+		select count(*) from reply_tbl where bno = #{bno} 
+	</select>
+		
+	<delete id="delete">
+		delete from reply_tbl where rno = #{rno}
+	</delete>
+	
+	<update id="update">
+		update reply_tbl set reply = #{reply}, updatedate = sysdate
+		where rno = #{rno}
+	</update>
+	
+</mapper>

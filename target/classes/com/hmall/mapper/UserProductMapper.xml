@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.UserProductMapper">
+
+	<select id="getCategoryList" resultType="com.hmall.domain.CategoryVO">
+		select cg_code, cg_prt_code, cg_name from category_tbl where cg_prt_code is null
+	</select>
+	
+	<!-- 2차 카테고리 출력 -->
+	<select id="getSubCategoryList" resultType="com.hmall.domain.CategoryVO">
+		select cg_code, cg_prt_code, cg_name from category_tbl
+		where cg_prt_code = #{cg_code}
+	</select>
+	
+	<select id="getProductListBysubCate" resultType="com.hmall.domain.ProductVO">
+		<![CDATA[
+		select pdt_num, cg_code, cg_prt_code, pdt_name, pdt_price, pdt_discount, pdt_detail, pdt_img, 
+        		pdt_company, pdt_count_buy, pdt_buy, pdt_date_up, pdt_date_edit
+		from
+		    (select /*+ index_desc(product_tbl SYS_C005127) */ rownum rn, pdt_num, cg_code, cg_prt_code, pdt_name, pdt_price, pdt_discount, pdt_detail, pdt_img, 
+		            pdt_company, pdt_count_buy, pdt_buy, pdt_date_up, pdt_date_edit
+		    from product_tbl where pdt_num > 0 and cg_code = #{cg_code} and rownum > 0 and rownum <= #{cri.pageNum} * #{cri.amount})
+		where rn  > (#{cri.pageNum}-1) * #{cri.amount}
+		]]>
+	</select>
+	
+	<select id="getTotalCountProductBysubCate" resultType="int">
+		select count(*) from product_tbl where pdt_num > 0 and cg_code = #{cg_code}
+	</select>
+	
+	<select id="getProductByNum" resultType="com.hmall.domain.ProductVO">
+		select * from product_tbl where pdt_num = #{pdt_num}
+	</select>
+	
+</mapper>

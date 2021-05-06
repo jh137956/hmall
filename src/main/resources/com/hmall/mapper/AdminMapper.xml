@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.mapper.AdminMapper">
+
+	<select id="login" resultType="com.hmall.domain.AdminVO">
+		select admin_id, admin_pw, admin_name, admin_date_late
+		from admin_tbl where admin_id = #{admin_id} and admin_pw = #{admin_pw}
+	</select>
+	
+	<update id="login_update">
+		update admin_tbl set admin_date_late = sysdate
+		where admin_id = #{admin_id}
+	</update>
+	
+	<!-- 관리자 정보 가져오기 -->
+	<select id="admin_info" resultType="com.hmall.domain.AdminVO">
+		select * from admin_tbl where admin_id = #{admin_id}
+	</select>
+	
+	<!-- 관리자수정 -->
+	<update id="admin_modifyPost">
+		update admin_tbl set admin_id = #{admin_id},
+						  	 admin_pw = #{admin_pw}, 
+						     admin_name = #{admin_name},               			    
+                 			 admin_date_late = sysdate
+		where admin_id = #{admin_id}
+	</update>
+	
+	<!-- VO클래스 필드와 테이블컬럼명이 다른경우 -->
+	<resultMap type="com.hmall.domain.UserInfo" id="userInfo">
+	<!-- mb_id, mb_pw, mb_name, mb_sex, mb_post, mb_addr, mb_addr2, mb_cp, mb_email, mb_accept_e, mb_point, mb_regdate, mb_update_date, mb_lastdate, mb_authcode -->
+		<id property="user_id" column="mb_id" />
+		<result property="user_id" column="mb_id" />
+		<result property="user_pw" column="mb_pw" />
+		<result property="user_name" column="mb_name" />
+		<result property="user_sex" column="mb_sex" />
+		<result property="user_post" column="mb_post" />
+		<result property="user_addr" column="mb_addr" />
+		<result property="user_addr2" column="mb_addr2" />
+		<result property="user_cp" column="mb_cp" />
+		<result property="user_email" column="mb_email" />
+		<result property="user_accept_e" column="mb_accept_e" />
+		<result property="user_authcode" column="mb_authcode" />
+		<result property="user_point" column="mb_point" />
+		<result property="user_regdate" column="mb_regdate" />
+		<result property="user_update_date" column="mb_update_date" />
+		<result property="user_lastdate" column="mb_lastdate" />
+		
+	</resultMap>
+	
+	<sql id="criteria">
+		<trim prefix="(" suffix=") and" prefixOverrides="OR">
+			<foreach item="type" collection="typeArr">
+				<trim prefix="OR">	
+					<choose>
+						<when test="type == 'N'.toString()">
+							mb_id like '%' || #{keyword} || '%'
+						</when>
+						<when test="type == 'D'.toString()">
+							mb_name like '%' || #{keyword} || '%'
+						</when>
+						<when test="type == 'C'.toString()">
+							mb_cp like '%' || #{keyword} || '%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="userInfo_list" resultMap="userInfo">
+		<![CDATA[
+		select mb_id, mb_pw, mb_name, mb_sex, mb_post, mb_addr, mb_addr2, mb_cp, mb_email, mb_accept_e, 
+				mb_point, mb_regdate, mb_update_date, mb_lastdate, mb_authcode
+    	from
+        	(select /*+ index_desc(order_tbl SYS_C005140) */ rownum rn, mb_id, mb_pw, mb_name, mb_sex, mb_post, mb_addr, mb_addr2, 
+        	mb_cp, mb_email, mb_accept_e, mb_point, mb_regdate, mb_update_date, mb_lastdate, mb_authcode
+        	from member_tbl where
+        ]]>	
+
+     	<include refid="criteria"></include>
+
+        <![CDATA[   
+          	rownum > 0 and rownum <= #{pageNum} * #{amount})
+		where rn  > (#{pageNum}-1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getUsertotalCount" resultType="int">
+		
+		select count(*) from member_tbl      
+
+	</select>
+	
+
+	
+</mapper>
